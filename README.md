@@ -1,4 +1,4 @@
-# SecureVault - Gestor de Contraseñas
+# SecureVault - Gestor de Contraseñas Local Seguro
 
 <div align="center">
 
@@ -7,121 +7,162 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/downloads/)
 
-*Un gestor de contraseñas seguro y moderno desarrollado en Python*
+*Un gestor de contraseñas seguro, local y moderno desarrollado en Python*
 
 </div>
 
-## 🌟 Características Principales
+## 🔒 Características de Seguridad
 
-- 🔐 **Seguridad Avanzada**
+- **Almacenamiento Local**
+  - Base de datos SQLite local para máxima privacidad
+  - Sin conexión a internet ni almacenamiento en la nube
+  - Control total sobre tus datos
+
+- **Encriptación Robusta**
   - Encriptación AES-256 para todas las contraseñas
+  - Contraseñas nunca almacenadas en texto plano
+  - Salt único para cada hash de contraseña maestra
+
+- **Protección de Acceso**
   - Autenticación con contraseña maestra
   - Bloqueo automático después de intentos fallidos
-  - Sin almacenamiento de contraseñas en texto plano
+  - Tiempo de espera progresivo entre intentos
 
-- 🎨 **Interfaz Moderna**
+## 💫 Características Principales
+
+- **Interfaz Moderna**
   - Diseño intuitivo y amigable
-  - Temas oscuro/claro
-  - Animaciones fluidas
+  - Tema oscuro por defecto
   - Iconos y elementos visuales modernos
+  - Interfaz responsive y adaptable
 
-- ⚡ **Funcionalidades**
-  - Generador de contraseñas seguras
+- **Gestión de Credenciales**
+  - Agregar/Editar/Eliminar credenciales
   - Búsqueda rápida de credenciales
   - Copiar al portapapeles con un clic
   - Mostrar/ocultar contraseñas
-  - Edición y eliminación de credenciales
 
-## 📋 Requisitos Previos
+- **Generador de Contraseñas**
+  - Generación de contraseñas seguras
+  - Opciones personalizables:
+    - Longitud ajustable
+    - Mayúsculas/minúsculas
+    - Números
+    - Caracteres especiales
+
+## 🛠️ Requisitos del Sistema
 
 - Python 3.8 o superior
-- pip (gestor de paquetes de Python)
-- Sistema operativo: Windows, macOS, o Linux
+- Sistema operativo:
+  - Windows 10/11
+  - macOS 10.14+
+  - Linux (distribuciones modernas)
+- 100 MB de espacio en disco
+- 2 GB de RAM (recomendado)
 
-## 🚀 Instalación
+## 📥 Instalación
 
-1. **Clonar el repositorio**
+1. **Clonar el Repositorio**
    ```bash
-   git clone https://github.com/mat1520/securevault-password-manager.git
-   cd securevault-password-manager
+   git clone https://github.com/yourusername/securevault.git
+   cd securevault
    ```
 
-2. **Crear y activar entorno virtual**
-   ```bash
-   # Windows
-   python -m venv venv
-   venv\Scripts\activate
-
-   # Linux/macOS
-   python3 -m venv venv
-   source venv/bin/activate
-   ```
-
-3. **Instalar dependencias**
+2. **Instalar Dependencias**
    ```bash
    pip install -r requirements.txt
    ```
 
-## 💻 Uso
-
-1. **Iniciar la aplicación**
+3. **Ejecutar la Aplicación**
    ```bash
    python src/main.py
    ```
 
-2. **Primer uso**
-   - Crear una contraseña maestra segura
-   - La contraseña debe incluir:
-     - Mínimo 8 caracteres
-     - Mayúsculas y minúsculas
-     - Números
-     - Caracteres especiales
+## 🔄 Flujo de Trabajo
 
-3. **Gestión de Credenciales**
-   - **Agregar**: Click en "➕ Agregar Credencial"
-   - **Ver**: Click en "👁️ Ver Credenciales"
-   - **Buscar**: Usar la barra de búsqueda
-   - **Editar/Eliminar**: Botones en cada credencial
+### 1. Primer Uso
+1. Ejecutar la aplicación
+2. Crear una contraseña maestra segura
+3. La base de datos se inicializa automáticamente
 
-4. **Generador de Contraseñas**
-   - Click en "🔑 Generar Contraseña"
-   - Personalizar longitud y caracteres
-   - Copiar al portapapeles automáticamente
+### 2. Uso Diario
+1. Iniciar la aplicación
+2. Ingresar contraseña maestra
+3. Gestionar credenciales:
+   - Agregar nuevas
+   - Buscar existentes
+   - Editar/eliminar según necesidad
 
-## 🔧 Solución de Problemas
+### 3. Agregar Credenciales
+1. Clic en "➕ Agregar Credencial"
+2. Completar formulario:
+   - Sitio web
+   - Usuario
+   - Contraseña (manual o generada)
+3. Guardar cambios
 
-### Problemas Comunes
+### 4. Buscar y Editar
+1. Usar la barra de búsqueda
+2. Seleccionar credencial
+3. Editar información
+4. Guardar cambios
 
-1. **Error al guardar credenciales**
-   - Verificar permisos de escritura en la carpeta `data`
-   - Asegurar que la base de datos no está bloqueada
-   - Reiniciar la aplicación si persiste
+## 🔐 Arquitectura de Seguridad
 
-2. **Contraseña maestra no funciona**
-   - Verificar el bloqueo de mayúsculas
-   - Esperar si la cuenta está bloqueada
-   - Usar la opción de recuperación si es necesario
+### Base de Datos Local
+- SQLite3 para almacenamiento local
+- Archivo de base de datos encriptado
+- Sin conexiones externas
 
-3. **Base de datos corrupta**
-   - Hacer backup de `data/vault.db`
-   - Eliminar y dejar que se recree
-   - Restaurar desde backup si es necesario
+### Encriptación
+1. **Contraseña Maestra**
+   - Hash SHA-256
+   - Salt único por instalación
+   - Verificación segura
 
-### Mensajes de Error
+2. **Credenciales**
+   - Encriptación AES-256
+   - Claves únicas por sesión
+   - Datos en memoria limpiados al cerrar
 
-| Mensaje | Causa | Solución |
-|---------|-------|----------|
-| "No se pudo guardar la credencial" | Error de escritura en DB | Verificar permisos |
-| "Contraseña incorrecta" | Error de autenticación | Verificar credenciales |
-| "Base de datos bloqueada" | Acceso simultáneo | Cerrar otras instancias |
+### Protección de Datos
+- Limpieza automática del portapapeles
+- Bloqueo por inactividad
+- Sanitización de entradas
 
-## 🛡️ Seguridad
+## 🛡️ Medidas de Seguridad Adicionales
 
-- Las contraseñas se almacenan usando encriptación AES-256
-- La contraseña maestra nunca se guarda, solo su hash
-- Datos sensibles protegidos en memoria
-- Bloqueo automático por seguridad
-- Sin telemetría ni recolección de datos
+1. **Protección contra Ataques**
+   - Prevención de inyección SQL
+   - Sanitización de entradas
+   - Límite de intentos de acceso
+
+2. **Seguridad de Datos**
+   - Backups automáticos encriptados
+   - Limpieza segura de memoria
+   - Protección contra volcados de memoria
+
+3. **Privacidad**
+   - Sin telemetría
+   - Sin conexiones externas
+   - Sin recolección de datos
+
+## 📋 Recomendaciones de Uso
+
+1. **Contraseña Maestra**
+   - Usar una contraseña fuerte
+   - Cambiarla regularmente
+   - No compartirla nunca
+
+2. **Backups**
+   - Realizar copias regulares
+   - Almacenar en lugar seguro
+   - Verificar integridad
+
+3. **Seguridad General**
+   - Mantener el sistema actualizado
+   - Usar antivirus actualizado
+   - Cerrar sesión al terminar
 
 ## 🤝 Contribuir
 
@@ -132,39 +173,24 @@
 5. Crear Pull Request
 
 ### Guía de Estilo
-
-- Seguir PEP 8 para Python
-- Documentar funciones y clases
-- Mantener coherencia en el diseño UI
-- Escribir pruebas unitarias
-
-## 📝 TODO
-
-- [ ] Sincronización en la nube
-- [ ] Importar/exportar credenciales
-- [ ] Autenticación biométrica
-- [ ] Historial de contraseñas
-- [ ] Auditoría de seguridad
-- [ ] Backup automático
+- Seguir PEP 8
+- Documentar todo el código
+- Pruebas unitarias para nuevas funciones
 
 ## 📄 Licencia
 
-Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) para detalles
-
-## 👥 Autores
-
-- [@mat1520](https://github.com/mat1520) - Desarrollo inicial
+Este proyecto está bajo la Licencia MIT. Ver el archivo [LICENSE](LICENSE) para más detalles.
 
 ## 🙏 Agradecimientos
 
-- [CustomTkinter](https://github.com/TomSchimansky/CustomTkinter) por el framework UI
-- [cryptography](https://github.com/pyca/cryptography) por las funciones de encriptación
-- Comunidad de Python por el apoyo
+- Iconos: [Feather Icons](https://feathericons.com)
+- UI Framework: [CustomTkinter](https://github.com/TomSchimansky/CustomTkinter)
+- Encriptación: [cryptography](https://cryptography.io)
 
-## 📞 Soporte
+---
 
-Para reportar problemas o sugerir mejoras:
-1. Abrir un issue en GitHub
-2. Describir el problema/sugerencia
-3. Incluir pasos para reproducir (si aplica)
-4. Agregar capturas de pantalla si es necesario 
+<div align="center">
+Desarrollado @mat1520
+
+[Reportar Bug](https://github.com/yourusername/securevault/issues) · [Solicitar Función](https://github.com/yourusername/securevault/issues)
+</div> 

@@ -27,15 +27,19 @@ class SecureVaultGUI:
         # Ventana principal
         self.root = ctk.CTk()
         self.root.title("SecureVault")
-        self.root.geometry("1200x800")  # Ventana más grande por defecto
-        self.root.minsize(1000, 600)
-
-        # Centrar la ventana en la pantalla
+        
+        # Configurar pantalla completa
+        self.root.state('zoomed')  # Esto hace que la ventana se abra maximizada en Windows
+        
+        # Obtener dimensiones de la pantalla
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
-        x = (screen_width - 1200) // 2
-        y = (screen_height - 800) // 2
-        self.root.geometry(f"1200x800+{x}+{y}")
+        
+        # Configurar el tamaño mínimo de la ventana
+        self.root.minsize(1000, 600)
+        
+        # Configurar el tamaño inicial para que ocupe toda la pantalla
+        self.root.geometry(f"{screen_width}x{screen_height}+0+0")
 
         # Cargar el logo
         try:
@@ -386,17 +390,6 @@ class SecureVaultGUI:
             hover_color="#444444"
         )
         view_btn.pack(pady=5, fill="x")
-
-        generate_btn = ctk.CTkButton(
-            buttons_frame,
-            text="🔑 Generar Contraseña",
-            command=self.show_password_generator,
-            height=40,
-            font=("Roboto", 12),
-            fg_color="#333333",
-            hover_color="#444444"
-        )
-        generate_btn.pack(pady=5, fill="x")
 
         # Botón de cerrar sesión en la parte inferior
         logout_frame = ctk.CTkFrame(sidebar, fg_color="transparent")
@@ -983,18 +976,6 @@ class SecureVaultGUI:
         )
         copy_btn.pack(pady=5)
 
-        close_btn = ctk.CTkButton(
-            buttons_frame,
-            text="✖️ Cerrar",
-            command=dialog.destroy,
-            width=350,
-            height=40,
-            font=("Roboto", 14),
-            fg_color="#333333",
-            hover_color="#444444"
-        )
-        close_btn.pack(pady=5)
-
         # Generar una contraseña inicial
         password_var.set(self.generate_password())
 
@@ -1032,8 +1013,12 @@ class SecureVaultGUI:
         password = self.password_entry.get()
         try:
             if self.auth_manager.login(password):
+                # Inicializar la encriptación antes de crear el DatabaseManager
                 self.crypto_manager.initialize_encryption(password)
+                # Crear el DatabaseManager después de inicializar la encriptación
                 self.db_manager = DatabaseManager(self.crypto_manager)
+                # Crear y configurar el vault
+                self.vault = PasswordVault(self.crypto_manager)
                 self.setup_main_frame()
             else:
                 messagebox.showerror("Error", "Contraseña incorrecta")
@@ -1091,15 +1076,26 @@ class SecureVaultGUI:
             return False
 
         try:
+            # Verificar que el administrador de base de datos está inicializado
+            if not self.db_manager:
+                raise ValueError("No hay una sesión activa. Por favor, inicia sesión nuevamente.")
+
+            # Intentar agregar la credencial
             if self.db_manager.add_credential(website, username, password):
+                # También agregar al vault para mantener la sincronización
+                if self.vault:
+                    self.vault.add_credentials(website, username, password)
                 self.refresh_credentials()
                 return True
-            else:
-                messagebox.showerror("Error", "No se pudo guardar la credencial")
-                return False
-        except Exception as e:
-            messagebox.showerror("Error", f"Error al guardar: {str(e)}")
+            
+        except ValueError as e:
+            messagebox.showerror("Error", str(e))
             return False
+        except Exception as e:
+            messagebox.showerror("Error", f"Error inesperado al guardar: {str(e)}")
+            return False
+
+        return False
 
     def delete_credential(self, credential_id: int):
         """Elimina credenciales de la base de datos."""
@@ -1122,6 +1118,219 @@ class SecureVaultGUI:
             
         for cred in credentials:
             self.create_credential_card(cred)
+
+    def show_edit_credential_dialog(self, credential: dict):
+        """Muestra el diálogo para editar credenciales existentes."""
+        dialog = ctk.CTkToplevel(self.root)
+        dialog.title("Editar Credencial")
+        dialog.geometry("450x650")
+        dialog.resizable(False, False)
+        
+        # Configurar el tema del diálogo
+        dialog.configure(fg_color="#1a1a1a")
+        
+        # Centrar el diálogo
+        dialog.update_idletasks()
+        width = 450
+        height = 650
+        x = (dialog.winfo_screenwidth() // 2) - (width // 2)
+        y = (dialog.winfo_screenheight() // 2) - (height // 2)
+        dialog.geometry(f"{width}x{height}+{x}+{y}")
+        
+        dialog.transient(self.root)
+        dialog.grab_set()
+        dialog.focus_set()
+
+        # Contenedor principal con padding
+        main_frame = ctk.CTkFrame(dialog, fg_color="#1a1a1a")
+        main_frame.pack(fill="both", expand=True, padx=30, pady=30)
+
+        # Logo pequeño en la parte superior
+        if self.logo_small:
+            logo_label = ctk.CTkLabel(
+                main_frame,
+                image=self.logo_small,
+                text=""
+            )
+            logo_label.pack(pady=(0, 20))
+
+        # Título
+        title = ctk.CTkLabel(
+            main_frame,
+            text="Editar Credencial",
+            font=("Roboto", 24, "bold"),
+            text_color="#00FFE0"
+        )
+        title.pack(pady=(0, 30))
+
+        # Campo Sitio Web
+        website_label = ctk.CTkLabel(
+            main_frame,
+            text="Sitio Web:",
+            font=("Roboto", 13, "bold"),
+            text_color="#00FFE0"
+        )
+        website_label.pack(anchor="w")
+        
+        website_entry = ctk.CTkEntry(
+            main_frame,
+            width=390,
+            height=40,
+            font=("Roboto", 13),
+            fg_color="#2d2d2d",
+            border_color="#00FFE0",
+            border_width=1
+        )
+        website_entry.insert(0, credential['website'])
+        website_entry.pack(pady=(5, 15))
+
+        # Campo Usuario
+        username_label = ctk.CTkLabel(
+            main_frame,
+            text="Usuario:",
+            font=("Roboto", 13, "bold"),
+            text_color="#00FFE0"
+        )
+        username_label.pack(anchor="w")
+        
+        username_entry = ctk.CTkEntry(
+            main_frame,
+            width=390,
+            height=40,
+            font=("Roboto", 13),
+            fg_color="#2d2d2d",
+            border_color="#00FFE0",
+            border_width=1
+        )
+        username_entry.insert(0, credential['username'])
+        username_entry.pack(pady=(5, 15))
+
+        # Campo Contraseña
+        password_label = ctk.CTkLabel(
+            main_frame,
+            text="Contraseña:",
+            font=("Roboto", 13, "bold"),
+            text_color="#00FFE0"
+        )
+        password_label.pack(anchor="w")
+        
+        # Frame para contraseña y botones
+        password_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
+        password_frame.pack(fill="x", pady=(5, 15))
+        
+        password_entry = ctk.CTkEntry(
+            password_frame,
+            show="•",
+            width=310,
+            height=40,
+            font=("Roboto", 13),
+            fg_color="#2d2d2d",
+            border_color="#00FFE0",
+            border_width=1
+        )
+        password_entry.insert(0, credential['password'])
+        password_entry.pack(side="left")
+
+        # Frame para botones de contraseña
+        pass_buttons_frame = ctk.CTkFrame(password_frame, fg_color="transparent")
+        pass_buttons_frame.pack(side="right")
+
+        show_hide_btn = ctk.CTkButton(
+            pass_buttons_frame,
+            text="🔒",
+            width=35,
+            height=40,
+            font=("Roboto", 16),
+            fg_color="#2d2d2d",
+            hover_color="#404040",
+            command=lambda: password_entry.configure(show="" if password_entry.cget("show") == "•" else "•")
+        )
+        show_hide_btn.pack(side="left", padx=5)
+
+        copy_btn = ctk.CTkButton(
+            pass_buttons_frame,
+            text="📋",
+            width=35,
+            height=40,
+            font=("Roboto", 16),
+            fg_color="#2d2d2d",
+            hover_color="#404040",
+            command=lambda: self.copy_to_clipboard(password_entry.get())
+        )
+        copy_btn.pack(side="left")
+
+        # Botón para generar contraseña
+        generate_btn = ctk.CTkButton(
+            main_frame,
+            text="🔑 Generar Contraseña Segura",
+            command=lambda: password_entry.delete(0, 'end') or password_entry.insert(0, self.generate_password()),
+            width=390,
+            height=40,
+            font=("Roboto", 13),
+            fg_color="#2d2d2d",
+            hover_color="#404040"
+        )
+        generate_btn.pack(pady=(0, 20))
+
+        # Separador
+        separator = ctk.CTkFrame(main_frame, height=2, fg_color="#333333")
+        separator.pack(fill="x", pady=20)
+
+        # Botones de acción
+        buttons_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
+        buttons_frame.pack(fill="x", pady=(0, 10))
+
+        def save_changes():
+            if not website_entry.get() or not username_entry.get() or not password_entry.get():
+                messagebox.showerror("Error", "Por favor completa todos los campos")
+                return
+            
+            try:
+                if self.db_manager.update_credential(
+                    credential['id'],
+                    website_entry.get(),
+                    username_entry.get(),
+                    password_entry.get()
+                ):
+                    messagebox.showinfo("Éxito", "Credencial actualizada correctamente")
+                    self.refresh_credentials()
+                    dialog.destroy()
+                else:
+                    messagebox.showerror("Error", "No se pudo actualizar la credencial")
+            except Exception as e:
+                messagebox.showerror("Error", f"Error al actualizar: {str(e)}")
+
+        # Botón de guardar
+        save_btn = ctk.CTkButton(
+            buttons_frame,
+            text="💾 Guardar Cambios",
+            command=save_changes,
+            width=390,
+            height=50,
+            font=("Roboto", 16, "bold"),
+            fg_color="#00FFE0",
+            text_color="black",
+            hover_color="#00CCB4",
+            corner_radius=10
+        )
+        save_btn.pack(pady=(0, 10))
+
+        # Botón de cancelar
+        cancel_btn = ctk.CTkButton(
+            buttons_frame,
+            text="❌ Cancelar",
+            command=dialog.destroy,
+            width=390,
+            height=45,
+            font=("Roboto", 14, "bold"),
+            fg_color="#333333",
+            hover_color="#444444"
+        )
+        cancel_btn.pack()
+
+        # Atajo de teclado para guardar (Ctrl+S)
+        dialog.bind('<Control-s>', lambda e: save_changes())
+        dialog.bind('<Return>', lambda e: save_changes())
 
     def run(self):
         """Inicia la aplicación."""

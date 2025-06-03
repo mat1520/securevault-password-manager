@@ -34,16 +34,16 @@ class DatabaseManager:
         """Agrega una nueva credencial a la base de datos."""
         try:
             # Verificar que la encriptación está inicializada
-            if not self.crypto_manager.fernet:
+            if not self.crypto_manager or not self.crypto_manager.fernet:
                 print("Error: La encriptación no está inicializada")
-                return False
+                raise ValueError("La encriptación no está inicializada correctamente")
 
             # Intentar encriptar la contraseña
             try:
                 encrypted_password = self.crypto_manager.encrypt_data(password)
             except Exception as e:
                 print(f"Error al encriptar la contraseña: {e}")
-                return False
+                raise ValueError(f"Error al encriptar la contraseña: {str(e)}")
 
             # Intentar guardar en la base de datos
             with sqlite3.connect(self.db_path) as conn:
@@ -56,7 +56,7 @@ class DatabaseManager:
             return True
         except Exception as e:
             print(f"Error al agregar credencial: {e}")
-            return False
+            raise ValueError(f"Error al guardar la credencial: {str(e)}")
 
     def get_credentials(self) -> List[Dict]:
         """Obtiene todas las credenciales almacenadas."""
@@ -87,7 +87,19 @@ class DatabaseManager:
     def update_credential(self, credential_id: int, website: str, username: str, password: str) -> bool:
         """Actualiza una credencial existente."""
         try:
-            encrypted_password = self.crypto_manager.encrypt(password)
+            # Verificar que la encriptación está inicializada
+            if not self.crypto_manager or not self.crypto_manager.fernet:
+                print("Error: La encriptación no está inicializada")
+                raise ValueError("La encriptación no está inicializada correctamente")
+
+            # Intentar encriptar la contraseña
+            try:
+                encrypted_password = self.crypto_manager.encrypt_data(password)
+            except Exception as e:
+                print(f"Error al encriptar la contraseña: {e}")
+                raise ValueError(f"Error al encriptar la contraseña: {str(e)}")
+
+            # Intentar actualizar en la base de datos
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
                 cursor.execute('''
@@ -99,7 +111,7 @@ class DatabaseManager:
             return True
         except Exception as e:
             print(f"Error al actualizar credencial: {e}")
-            return False
+            raise ValueError(f"Error al actualizar la credencial: {str(e)}")
 
     def delete_credential(self, credential_id: int) -> bool:
         """Elimina una credencial de la base de datos."""
@@ -128,13 +140,17 @@ class DatabaseManager:
                 
                 credentials = []
                 for row in rows:
-                    decrypted_password = self.crypto_manager.decrypt(row[3])
-                    credentials.append({
-                        'id': row[0],
-                        'website': row[1],
-                        'username': row[2],
-                        'password': decrypted_password
-                    })
+                    try:
+                        decrypted_password = self.crypto_manager.decrypt_data(row[3])
+                        credentials.append({
+                            'id': row[0],
+                            'website': row[1],
+                            'username': row[2],
+                            'password': decrypted_password
+                        })
+                    except Exception as e:
+                        print(f"Error al desencriptar contraseña: {e}")
+                        continue
                 return credentials
         except Exception as e:
             print(f"Error al buscar credenciales: {e}")
